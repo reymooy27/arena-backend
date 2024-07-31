@@ -1,13 +1,13 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	_ "github.com/lib/pq"
 	"log"
 )
 
-var DB *gorm.DB
+var DB *sql.DB
 
 func InitDatabase() {
 
@@ -16,26 +16,18 @@ func InitDatabase() {
 	// DBConnectionString := "user=postgres.hhqemokocrfgbnaierzf password=Jkhqdlkhqlkwjd235hlqdw9adf! host=aws-0-ap-southeast-1.pooler.supabase.com? port=6543 dbname=postgres"
 	DBConnectionString := "postgresql://postgres.hhqemokocrfgbnaierzf:Jkhqdlkhqlkwjd235hlqdw9adf!@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 
-	DB, err = gorm.Open(postgres.Open(DBConnectionString), &gorm.Config{})
+	DB, err = sql.Open("postgres", DBConnectionString)
 
 	if err != nil {
 		log.Fatal("Error connecting to database: ", err)
 	}
 
+	err = DB.Ping()
+
+	if err != nil {
+		log.Fatal("Cannot ping database")
+	}
+
 	fmt.Println("Database connected!")
 
-}
-
-type BLT struct {
-	ID               uint `gorm:"primaryKey"`
-	Nama             string
-	Pekerjaan        string
-	Penghasilan      string
-	KepemilikanRumah string
-	Aset             string
-	JumlahTanggungan string
-}
-
-func (BLT) TableName() string {
-	return "BLT"
 }
