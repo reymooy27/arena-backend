@@ -1,25 +1,25 @@
 services:
-  auth-service:
-    image: auth-service:latest
-    build:
-      context: ./auth-service
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    networks:
-      - app-network
-    env_file: ./auth-service/.env
-
   arena-service:
     image: arena-service:latest
     build:
       context: ./arena-service
       dockerfile: Dockerfile
     ports:
-      - "8081:8081"
+      - "8000:8000"
     networks:
       - app-network
     env_file: ./arena-service/.env
+
+  auth-service:
+    image: auth-service:latest
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    networks:
+      - app-network
+    env_file: ./auth-service/.env
 
   # db:
   #   image: postgres:latest
