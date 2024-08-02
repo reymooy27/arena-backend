@@ -1,0 +1,45 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output of the Air build
+bin/
+
+# Temporary and backup files
+*.tmp
+*.swp
+*.swo
+*~
+.DS_Store
+
+# IDE and editor directories
+.idea/
+.vscode/
+*.code-workspace
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Environment variables
+.env
+.env.*
+
+# Air configuration
+.air.toml
+
+# Air runtime directory
+air/
