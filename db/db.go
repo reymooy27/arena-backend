@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 
@@ -16,6 +15,11 @@ func InitDatabase() {
 	var err error
 
 	DBConnectionString := os.Getenv("DB_URL")
+	if DBConnectionString == "" {
+		log.Fatal("DB_URL not set")
+
+	}
+
 	DB, err = sql.Open("postgres", DBConnectionString)
 
 	if err != nil {
@@ -28,6 +32,6 @@ func InitDatabase() {
 		log.Fatal("Cannot ping database")
 	}
 
-	fmt.Println("Database connected!")
+	log.Println("Database connected!")
 
 }
