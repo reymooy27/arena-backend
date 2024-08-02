@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.22 AS builder
 
 WORKDIR /app
 
@@ -8,10 +8,17 @@ RUN go mod download
 
 COPY . .
 
-WORKDIR /app/cmd/auth-service
+RUN CGO_ENABLED=0 GOOS=linux go build -o auth-service /app/cmd/auth-service
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /auth-service .
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+
+COPY --from=builder /app/auth-service .
+COPY --from=builder /app/.env .
 
 EXPOSE 8000
 
-CMD ["/auth-service"]
+CMD ["./auth-service"]
