@@ -16,20 +16,20 @@ func InitDatabase() {
 
 	DBConnectionString := os.Getenv("DB_URL")
 	if DBConnectionString == "" {
-		log.Fatal("DB_URL not set")
+		log.Println("DB_URL not set")
 
 	}
 
 	DB, err = sql.Open("postgres", DBConnectionString)
 
 	if err != nil {
-		log.Fatal("Error connecting to database: ", err)
+		log.Println("Error connecting to database: ", err)
 	}
 
 	err = DB.Ping()
 
 	if err != nil {
-		log.Fatal("Cannot ping database")
+		log.Println("Cannot ping database")
 	}
 
 	log.Println("Database connected!")

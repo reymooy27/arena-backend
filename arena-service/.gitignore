@@ -11,6 +11,7 @@
 bin/
 
 # Temporary and backup files
+tmp/
 *.tmp
 *.swp
 *.swo

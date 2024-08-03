@@ -7,8 +7,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/reymooy27/arena-backend/db"
+	"github.com/reymooy27/arena-backend/arena-service/db"
+	"github.com/reymooy27/arena-backend/arena-service/utils"
 )
+
+// TODO: changes the database
+// TODO: changes data types
 
 type BLT struct {
 	Id               int64  `json:"id"`
@@ -30,9 +34,7 @@ func GetArena(w http.ResponseWriter, r *http.Request) {
 	row, err := db.DB.Query(query)
 
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("Invalid query")
+		utils.JSONResponse(w, http.StatusBadRequest, "Invalid query")
 	}
 
 	defer row.Close()
@@ -42,25 +44,21 @@ func GetArena(w http.ResponseWriter, r *http.Request) {
 	for row.Next() {
 		var blt BLT
 		if err := row.Scan(&blt.Id, &blt.Nama, &blt.Pekerjaan, &blt.Penghasilan, &blt.KepemilikanRumah, &blt.Aset, &blt.JumlahTanggungan); err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode("Cannot get data")
+			utils.JSONResponse(w, http.StatusInternalServerError, "Cannot get data")
+			return
 		}
 		datas = append(datas, blt)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(datas)
+	utils.JSONResponse(w, http.StatusOK, datas)
 }
 
 func GetArenaById(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	parsedId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("Invalid ID format")
+
+		utils.JSONResponse(w, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 
@@ -72,21 +70,15 @@ func GetArenaById(w http.ResponseWriter, r *http.Request) {
 
 	if err := row.Scan(&blt.Id, &blt.Nama, &blt.Pekerjaan, &blt.Penghasilan, &blt.KepemilikanRumah, &blt.Aset, &blt.JumlahTanggungan); err != nil {
 		if err == sql.ErrNoRows {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode("No data with the id")
+			utils.JSONResponse(w, http.StatusNotFound, "No data with the id")
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("There is something wrong")
+		utils.JSONResponse(w, http.StatusInternalServerError, "There is something wrong")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(&blt)
+	utils.JSONResponse(w, http.StatusOK, &blt)
 }
 
 func CreateArena(w http.ResponseWriter, r *http.Request) {
@@ -95,9 +87,7 @@ func CreateArena(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("Invalid request body")
+		utils.JSONResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -106,24 +96,18 @@ func CreateArena(w http.ResponseWriter, r *http.Request) {
 	log.Println(result)
 
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("Cannot insert data")
+		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot insert data")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode("Successfully inserted data")
+	utils.JSONResponse(w, http.StatusCreated, "Successfully inserted data")
 }
 
 func DeleteArena(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	parsedId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("Invalid ID format")
+		utils.JSONResponse(w, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 
@@ -133,22 +117,16 @@ func DeleteArena(w http.ResponseWriter, r *http.Request) {
 	rowsAffected, err := row.RowsAffected()
 
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("Error checking rows affected")
+		utils.JSONResponse(w, http.StatusInternalServerError, "Error checking rows affected")
 		return
 	}
 
 	if rowsAffected == 0 {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode("No data with the id")
+		utils.JSONResponse(w, http.StatusNotFound, "No data with the id")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode("Successfully delete data")
+	utils.JSONResponse(w, http.StatusOK, "Successfully delete data")
 
 }
 
@@ -156,18 +134,14 @@ func UpdateArena(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	parsedId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("Invalid ID format")
+		utils.JSONResponse(w, http.StatusBadRequest, "Invalid ID format")
 		return
 	}
 
 	var data BLT
 	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("Invalid request body")
+		utils.JSONResponse(w, http.StatusInternalServerError, "Invalid request body")
 		return
 	}
 
@@ -177,21 +151,15 @@ func UpdateArena(w http.ResponseWriter, r *http.Request) {
 	rowsAffected, err := result.RowsAffected()
 
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("Error checking rows affected")
+		utils.JSONResponse(w, http.StatusInternalServerError, "Error checking rows affected")
 		return
 	}
 
 	if rowsAffected == 0 {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode("No data with the id")
+		utils.JSONResponse(w, http.StatusNotFound, "No data with the id")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode("Successfully update data")
+	utils.JSONResponse(w, http.StatusOK, "Successfully update data")
 
 }

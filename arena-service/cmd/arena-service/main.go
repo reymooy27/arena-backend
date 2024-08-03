@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/joho/godotenv"
-	"github.com/reymooy27/arena-backend/db"
-	"github.com/reymooy27/arena-backend/routes"
+	"github.com/reymooy27/arena-backend/arena-service/db"
+	"github.com/reymooy27/arena-backend/arena-service/routes"
 )
 
 func main() {
