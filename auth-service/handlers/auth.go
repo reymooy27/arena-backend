@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -22,10 +23,10 @@ type Data struct {
 }
 
 type User struct {
-	Id        int
-	CreatedAt time.Time
-	Username  string
-	Password  string
+	Id        int       `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	Username  string    `json:"username"`
+	Password  string    `json:"password"`
 }
 
 type Claim struct {
@@ -56,6 +57,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	err = row.Scan(&user.Id, &user.CreatedAt, &user.Username, &user.Password)
 	if err != nil {
 		utils.JSONResponse(w, http.StatusBadRequest, "Wrong username")
+		slog.Error("Error", err)
 		return
 	}
 
@@ -63,6 +65,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.JSONResponse(w, http.StatusBadRequest, "Wrong password")
+		slog.Error("Cannot compare hash", err)
 		return
 	}
 
@@ -84,6 +87,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	jwt, err := token.SignedString([]byte(secret))
 	if err != nil {
 		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot create token")
+		slog.Error("Cannot sign jwt", err)
+		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -115,6 +120,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
+		slog.Info("Invalid request body", err)
 		utils.JSONResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -142,6 +148,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
   LIMIT 1`
 	err = db.DB.QueryRow(existedUsernameQuery, strings.Trim(data.Username, " ")).Scan(&existedUsername)
 	if err != nil && err != sql.ErrNoRows {
+		slog.Error("Error", err)
 		utils.JSONResponse(w, http.StatusInternalServerError, "Database error")
 		return
 	}
@@ -162,6 +169,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	log.Println(result)
 
 	if err != nil {
+		slog.Error("Error", err)
 		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot create user")
 		return
 	}
@@ -172,4 +180,65 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 func Verify(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user")
 	utils.JSONResponse(w, http.StatusOK, user)
+}
+
+// TODO : Need to check the previous password ???
+func ChangePassword(w http.ResponseWriter, r *http.Request) {
+
+	context := r.Context().Value("user").(*Claim)
+
+	type ChangePasswordBody struct {
+		NewPassword        string `json:"new_password"`
+		ConfirmNewPassword string `json:"confirm_password"`
+	}
+
+	var body ChangePasswordBody
+	var user User
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.JSONResponse(w, http.StatusBadRequest, "Invalid body request")
+		return
+	}
+
+	query := `SELECT id, username FROM "user" WHERE id = $1 LIMIT 1`
+
+	if err := db.DB.QueryRow(query, context.Id).Scan(&user.Id, &user.Username); err != nil {
+		if err == sql.ErrNoRows {
+			slog.Error("Query error", err)
+			utils.JSONResponse(w, http.StatusNotFound, "Cannot find user")
+			return
+		}
+
+		slog.Error("Query error", err)
+		utils.JSONResponse(w, http.StatusInternalServerError, "There is something wrong")
+		return
+	}
+
+	if user.Id != context.Id {
+		slog.Error("Forbidden change password")
+		utils.JSONResponse(w, http.StatusForbidden, "Cannot change password")
+		return
+	}
+
+	if body.NewPassword != body.ConfirmNewPassword {
+		utils.JSONResponse(w, http.StatusBadRequest, "New password must match confirm password")
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot hashed Password")
+		return
+	}
+
+	query = `UPDATE "user" SET password = $1 WHERE id = $2`
+	_, err = db.DB.Exec(query, string(hashedPassword), user.Id)
+
+	if err != nil {
+		slog.Error("Error", err)
+		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot change password")
+		return
+	}
+
+	utils.JSONResponse(w, http.StatusOK, "Successfuly change password")
 }

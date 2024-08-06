@@ -18,6 +18,7 @@ func main() {
 	router := http.NewServeMux()
 
 	routes.AuthRoutes(router)
+	routes.UserRoutes(router)
 
 	server := http.Server{
 		Addr:    ":8001",
