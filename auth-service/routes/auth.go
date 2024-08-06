@@ -12,4 +12,5 @@ func AuthRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /signup", handlers.Signup)
 	router.HandleFunc("GET /logout", handlers.Logout)
 	router.Handle("GET /verify", middleware.AuthMiddleware(http.HandlerFunc(handlers.Verify)))
+	router.Handle("POST /change-password", middleware.AuthMiddleware(http.HandlerFunc(handlers.ChangePassword)))
 }
