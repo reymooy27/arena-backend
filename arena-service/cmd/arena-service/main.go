@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/reymooy27/arena-backend/arena-service/db"
@@ -19,11 +20,16 @@ func main() {
 
 	routes.ArenaRoutes(router)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		slog.Error("PORT not set")
+	}
+
 	server := http.Server{
-		Addr:    ":8000",
+		Addr:    ":" + port,
 		Handler: router,
 	}
 
-	log.Println("Server running on port 8000")
+	slog.Info("Server running on port 8000")
 	server.ListenAndServe()
 }

@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/reymooy27/arena-backend/auth-service/db"
@@ -20,11 +21,16 @@ func main() {
 	routes.AuthRoutes(router)
 	routes.UserRoutes(router)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		slog.Error("PORT not set")
+	}
+
 	server := http.Server{
-		Addr:    ":8001",
+		Addr:    ":" + port,
 		Handler: router,
 	}
 
-	log.Println("Server running on port 8001")
+	slog.Info("Server running on port 8001")
 	server.ListenAndServe()
 }
