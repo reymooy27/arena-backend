@@ -120,7 +120,6 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		slog.Info("Invalid request body", err)
 		utils.JSONResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -140,15 +139,28 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tx, err := db.DB.Begin()
+	if err != nil {
+		slog.Error("Cannot begin transaction", "message", err)
+		utils.JSONResponse(w, http.StatusInternalServerError, "Database error")
+		return
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+			if err != nil {
+				log.Fatalf("Failed to commit transaction: %v", err)
+			}
+		}
+	}()
+
 	var existedUsername string
-	existedUsernameQuery := `
-  SELECT username 
-  FROM "user" 
-  WHERE username = $1 
-  LIMIT 1`
-	err = db.DB.QueryRow(existedUsernameQuery, strings.Trim(data.Username, " ")).Scan(&existedUsername)
+	existedUsernameQuery := ` SELECT username FROM "user" WHERE username = $1 LIMIT 1`
+	err = tx.QueryRow(existedUsernameQuery, strings.Trim(data.Username, " ")).Scan(&existedUsername)
 	if err != nil && err != sql.ErrNoRows {
-		slog.Error("Error", err)
+		slog.Error("Query check username exist", "message", err)
 		utils.JSONResponse(w, http.StatusInternalServerError, "Database error")
 		return
 	}
@@ -164,12 +176,20 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `INSERT INTO "user" ("username","password") VALUES ($1, $2)`
-	result, err := db.DB.Exec(query, data.Username, string(hashedPassword))
-	log.Println(result)
+	var userId int
+	query := `INSERT INTO "user" ("username","password") VALUES ($1, $2) RETURNING "id"`
+	if err = tx.QueryRow(query, data.Username, string(hashedPassword)).Scan(&userId); err != nil {
+		slog.Error("Query create user", "message", err)
+		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot create user")
+		return
+	}
 
+	slog.Info("id", userId)
+
+	query = `INSERT INTO "profiles" ("user_id") VALUES ($1)`
+	_, err = tx.Exec(query, userId)
 	if err != nil {
-		slog.Error("Error", err)
+		slog.Error("Query create profile", "message", err)
 		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot create user")
 		return
 	}
