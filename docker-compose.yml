@@ -21,6 +21,17 @@ services:
       - app-network
     env_file: ./auth-service/.env
 
+  booking-service:
+    image: booking-service:latest
+    build:
+      context: ./booking-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    networks:
+      - app-network
+    env_file: ./booking-service/.env
+
   # db:
   #   image: postgres:latest
   #   volumes:
