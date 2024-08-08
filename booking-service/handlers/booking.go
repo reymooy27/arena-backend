@@ -3,9 +3,11 @@ package handlers
 import (
 	// "database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
+
 	// "os"
 	// "strings"
 	"time"
@@ -27,6 +29,8 @@ type Booking struct {
 	UserId       int       `json:"user_id"`
 	CreatedAt    time.Time `json:"created_at"`
 	BookingSlots string    `json:"booking_slots"`
+	Username     string    `json:"username"`
+	ArenaName    string    `json:"arena_name"`
 }
 
 type Claim struct {
@@ -77,6 +81,30 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	var bookings []Booking
+	userDataChan := make(chan *UserDataResponse)
+	userErrChan := make(chan error)
+
+	go func() {
+		userData, err := GetUserData(user.Id)
+		if err != nil {
+			userErrChan <- err
+		}
+		userDataChan <- userData
+	}()
+
+	var userData *UserDataResponse
+	select {
+	case userData = <-userDataChan:
+	case userErr := <-userErrChan:
+		slog.Error("Error get user data", "message", userErr)
+		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot get data")
+		return
+	}
+	if userData == nil {
+		slog.Error("userData is nil", "userId", user.Id)
+		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot get data")
+		return
+	}
 
 	for rows.Next() {
 		var booking Booking
@@ -85,8 +113,86 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 			utils.JSONResponse(w, http.StatusInternalServerError, "Cannot get data")
 			return
 		}
+
+		arenaDataChan := make(chan *ArenaDataResponse)
+		arenaErrChan := make(chan error)
+
+		go func(arenaId int) {
+			arenaData, err := GetArenaData(arenaId)
+			if err != nil {
+				arenaErrChan <- err
+			}
+			arenaDataChan <- arenaData
+		}(booking.ArenaId)
+
+		var arenaData *ArenaDataResponse
+		select {
+		case arenaData = <-arenaDataChan:
+		case arenaErr := <-arenaErrChan:
+			slog.Error("Error get arena data", "message", arenaErr)
+			continue
+		}
+		if arenaData == nil {
+			slog.Error("arenaData is nil", "arenaId", booking.ArenaId)
+			utils.JSONResponse(w, http.StatusInternalServerError, "Cannot get data")
+			return
+		}
+
+		booking.Username = userData.Username
+		booking.ArenaName = arenaData.Nama
 		bookings = append(bookings, booking)
 	}
 
 	utils.JSONResponse(w, http.StatusOK, bookings)
+}
+
+type UserDataResponse struct {
+	Username string `json:"username"`
+	Id       int    `json:"id"`
+}
+
+func GetUserData(userId int) (*UserDataResponse, error) {
+	res, err := http.Get(fmt.Sprintf("http://localhost:8001/user/%d", userId))
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, err
+	}
+
+	var response UserDataResponse
+
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+type ArenaDataResponse struct {
+	Nama string `json:"nama"`
+	Id   int    `json:"id"`
+}
+
+func GetArenaData(arenaId int) (*ArenaDataResponse, error) {
+	res, err := http.Get(fmt.Sprintf("http://localhost:8000/arena/%d", arenaId))
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, err
+	}
+	var response ArenaDataResponse
+
+	if err := json.NewDecoder(res.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
