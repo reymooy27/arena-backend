@@ -70,7 +70,7 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 
 	user := r.Context().Value("user").(*Claim)
 
-	query := `SELECT * FROM bookings WHERE user_id = $1`
+	query := `SELECT * FROM bookings WHERE user_id = $1 ORDER BY created_at DESC LIMIT 5 `
 	rows, err := db.DB.Query(query, user.Id)
 	if err != nil {
 		slog.Error("Query error", "message", err)
