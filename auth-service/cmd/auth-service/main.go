@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -23,7 +24,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		slog.Error("PORT not set")
+		log.Fatal("PORT not set")
 	}
 
 	server := http.Server{
@@ -31,6 +32,8 @@ func main() {
 		Handler: router,
 	}
 
-	slog.Info("Server running on port 8001")
-	server.ListenAndServe()
+	slog.Info("Auth Service is running", "PORT", port)
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("Cannot start server: %s", err)
+	}
 }

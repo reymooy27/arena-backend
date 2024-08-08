@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"log"
 	"log/slog"
 	"os"
 
@@ -16,8 +17,7 @@ func InitDatabase() {
 
 	DBConnectionString := os.Getenv("DB_URL")
 	if DBConnectionString == "" {
-		slog.Error("DB_URL not set")
-
+		log.Fatal("DB_URL not set")
 	}
 
 	DB, err = sql.Open("postgres", DBConnectionString)

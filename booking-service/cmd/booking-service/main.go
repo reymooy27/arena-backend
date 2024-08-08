@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -22,7 +23,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		slog.Error("PORT not set")
+		log.Fatal("PORT not set")
 	}
 
 	server := http.Server{
@@ -30,9 +31,9 @@ func main() {
 		Handler: router,
 	}
 
-	slog.Info(`Server running on`, "PORT", port)
+	slog.Info("Booking Service is running", "PORT", port)
 	err := server.ListenAndServe()
 	if err != nil {
-		slog.Error(`Server error`, "message", err)
+		log.Fatalf("Cannot start server: %s", err)
 	}
 }
