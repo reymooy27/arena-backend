@@ -1,14 +1,17 @@
 package handlers
 
 import (
-	"encoding/json"
+	// "encoding/json"
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/reymooy27/arena-backend/payment-service/db"
+	// "github.com/reymooy27/arena-backend/payment-service/db"
+	pb "github.com/reymooy27/arena-backend/payment-service/proto"
 	"github.com/reymooy27/arena-backend/payment-service/utils"
 )
 
@@ -26,24 +29,45 @@ type Claim struct {
 // INFO: still testing
 func CreatePayment(w http.ResponseWriter, r *http.Request) {
 
-	user := r.Context().Value("user").(*Claim)
+	// user := r.Context().Value("user").(*Claim)
 
-	var body Body
+	req := &pb.HelloRequest{}
 
-	err := json.NewDecoder(r.Body).Decode(&body)
+	br, err := io.ReadAll(r.Body)
 	if err != nil {
+		slog.Error("Read body error", "message", err)
 		utils.JSONResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	query := `INSERT INTO payments (user_id, amount) VALUES ($1, $2)`
-	result, err := db.DB.Exec(query, user.Id, body.Amount)
-	log.Println(result)
-	if err != nil {
-		slog.Error("Query error", "message", err)
-		utils.JSONResponse(w, http.StatusBadRequest, "Cannot create payment")
+	if err := proto.Unmarshal(br, req); err != nil {
+		slog.Error("Unmarshal body error", "message", err)
+		utils.JSONResponse(w, 500, "Invalid request body")
 		return
 	}
 
-	utils.JSONResponse(w, http.StatusOK, "Payment succesfull")
+	name := req.GetName()
+	log.Printf(req.GetName())
+
+	res := &pb.HelloResponse{Message: "Hello " + name}
+
+	response, err := proto.Marshal(res)
+	if err != nil {
+		slog.Error("Marshal response error", "message", err)
+		utils.JSONResponse(w, 500, "Cannot marshal response")
+		return
+	}
+
+	w.Write(response)
+
+	// query := `INSERT INTO payments (user_id, amount) VALUES ($1, $2)`
+	// result, err := db.DB.Exec(query, user.Id, body.Amount)
+	// log.Println(result)
+	// if err != nil {
+	// 	slog.Error("Query error", "message", err)
+	// 	utils.JSONResponse(w, http.StatusBadRequest, "Cannot create payment")
+	// 	return
+	// }
+
+	// utils.JSONResponse(w, http.StatusOK, "Payment succesfull")
 }
