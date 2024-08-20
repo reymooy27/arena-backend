@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arena-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: arena-service
+  template:
+    metadata:
+      labels:
+        app: arena-service
+    spec:
+      containers:
+        - name: arena-service
+          image: arena-service
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: arena-service-config

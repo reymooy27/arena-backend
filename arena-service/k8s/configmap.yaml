@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arena-service-config
+data:
+  DB_URL: "postgresql://postgres.hhqemokocrfgbnaierzf:Jkhqdlkhqlkwjd235hlqdw9adf!@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+  SECRET: "secret"
+  PORT: "8000"
