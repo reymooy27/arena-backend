@@ -1,48 +1,48 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: arena-service
+  name: booking-service
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: arena-service
+      app: booking-service
   template:
     metadata:
       labels:
-        app: arena-service
+        app: booking-service
     spec:
       containers:
-        - name: arena-service
-          image: itzyaboirey/arena-service:latest
+        - name: booking-service
+          image: itzyaboirey/booking-service:latest
           ports:
-            - containerPort: 8000
+            - containerPort: 8002
           env:
             - name: PORT
               valueFrom:
                 configMapKeyRef:
-                  name: arena-service-config
+                  name: booking-service-config
                   key: PORT
             - name: DB_URL
               valueFrom:
                 secretKeyRef:
-                  name: arena-service-secret
+                  name: booking-service-secret
                   key: DB_URL
             - name: SECRET
               valueFrom:
                 secretKeyRef:
-                  name: arena-service-secret
+                  name: booking-service-secret
                   key: SECRET
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: arena-service
+  name: booking-service
 spec:
   selector:
-    app: arena-service
+    app: booking-service
   ports:
     - protocol: TCP
-      port: 8000
-      targetPort: 8000
+      port: 8002
+      targetPort: 8002
   type: LoadBalancer

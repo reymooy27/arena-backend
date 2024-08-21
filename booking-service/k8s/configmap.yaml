@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: booking-service-config
+data:
+  DB_URL: :"postgresql://itzyaboirey:reymooY27@localhost:5432/booking-service"
+  SECRET: "secret"
+  PORT: "8002"
