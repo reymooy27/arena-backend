@@ -17,6 +17,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 COPY --from=builder /app/booking-service .
+COPY --from=builder /app/db/migrations /root/db/migrations
 # COPY --from=builder /app/.env .
 
 EXPOSE 8002

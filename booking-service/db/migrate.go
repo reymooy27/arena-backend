@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"database/sql"
@@ -9,13 +9,10 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-func main() {
-
-	godotenv.Load(".env")
+func RunMigration() {
 
 	connString := os.Getenv("DB_URL")
 	if connString == "" {
