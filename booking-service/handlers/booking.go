@@ -7,6 +7,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	// "os"
 	// "strings"
@@ -39,6 +40,16 @@ type Claim struct {
 	jwt.StandardClaims
 }
 
+type ArenaDataResponse struct {
+	Nama string `json:"nama"`
+	Id   int    `json:"id"`
+}
+
+type UserDataResponse struct {
+	Username string `json:"username"`
+	Id       int    `json:"id"`
+}
+
 // INFO: not finished,
 // INFO: still testing
 func CreateBooking(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +76,7 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 	utils.JSONResponse(w, http.StatusOK, "Successfully create booking")
 }
 
-// TODO: join table/data from different database (microrservices)
+// TODO: still looking for better aproach to join data between services
 func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 
 	user := r.Context().Value("user").(*Claim)
@@ -146,20 +157,20 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 	utils.JSONResponse(w, http.StatusOK, bookings)
 }
 
-type UserDataResponse struct {
-	Username string `json:"username"`
-	Id       int    `json:"id"`
-}
-
 func GetUserData(userId int) (*UserDataResponse, error) {
-	res, err := http.Get(fmt.Sprintf("http://localhost:8001/user/%d", userId))
+	userServiceURL := os.Getenv("USER_SERVICE_URL")
+
+	url := fmt.Sprintf("%s/user/%d", userServiceURL, userId)
+	res, err := http.Get(url)
 	if err != nil {
+		slog.Error("Cannot fetch user data", "err", err)
 		return nil, err
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
+		slog.Error("Cannot fetch user data", "err", err)
 		return nil, err
 	}
 
@@ -172,20 +183,20 @@ func GetUserData(userId int) (*UserDataResponse, error) {
 	return &response, nil
 }
 
-type ArenaDataResponse struct {
-	Nama string `json:"nama"`
-	Id   int    `json:"id"`
-}
-
 func GetArenaData(arenaId int) (*ArenaDataResponse, error) {
-	res, err := http.Get(fmt.Sprintf("http://localhost:8000/arena/%d", arenaId))
+
+	arenaServiceURL := os.Getenv("ARENA_SERVICE_URL")
+
+	res, err := http.Get(fmt.Sprintf("%s/arena/%d", arenaServiceURL, arenaId))
 	if err != nil {
+		slog.Error("Cannot fetch arena data", "err", err)
 		return nil, err
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
+		slog.Error("Cannot fetch arena data", "err", err)
 		return nil, err
 	}
 	var response ArenaDataResponse
