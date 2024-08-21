@@ -19,6 +19,6 @@ WORKDIR /root/
 COPY --from=builder /app/auth-service .
 COPY --from=builder /app/.env .
 
-EXPOSE 8000
+EXPOSE 8001
 
 CMD ["./auth-service"]
