@@ -1,9 +1,10 @@
-package main
+package db
 
 import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -11,9 +12,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	// Database connection
-	db, err := sql.Open("postgres", "postgresql://postgres.lzcfzojsikdlgfbaortw:IPHqieSROTdTNZrv@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true")
+func RunMigration() {
+
+	connString := os.Getenv("DB_URL")
+	if connString == "" {
+		log.Fatal("DB_URL not set")
+	}
+
+	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -36,6 +42,12 @@ func main() {
 	if err != nil && err != migrate.ErrNoChange {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
+
+	v, d, err := m.Version()
+	if err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+	fmt.Printf("Version: %d, dirty: %t\n", v, d)
 
 	fmt.Println("Migrations applied successfully!")
 }
