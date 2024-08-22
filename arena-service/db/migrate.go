@@ -2,8 +2,7 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -16,40 +15,40 @@ func RunMigration() {
 
 	connString := os.Getenv("DB_URL")
 	if connString == "" {
-		log.Fatal("DB_URL not set")
+		slog.Error("DB_URL not set")
 	}
 
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		slog.Error("Failed to connect to database", "err", err)
 	}
 	defer db.Close()
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		log.Fatalf("Failed to create migration driver: %v", err)
+		slog.Error("Failed to create migration driver", "err", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://db/migrations",
 		"postgres", driver)
 	if err != nil {
-		log.Fatalf("Failed to create migrate instance: %v", err)
+		slog.Error("Failed to create migrate instance", "err", err)
 	}
 
 	// Run migrations
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		log.Fatalf("Failed to run migrations: %v", err)
+		slog.Error("Failed to run migrations", "err", err)
 	}
 
 	v, d, err := m.Version()
 	if err != nil && err != migrate.ErrNoChange {
-		log.Fatalf("Failed to run migrations: %v", err)
+		slog.Error("Failed to run migrations", "err", err)
 	}
-	fmt.Printf("Version: %d, dirty: %t\n", v, d)
+	slog.Info("Migration", "Version", v, "dirty", d)
 
-	fmt.Println("Migrations applied successfully!")
+	slog.Info("Migrations applied successfully!")
 }
 
 // to create migration file in cli

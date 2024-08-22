@@ -41,7 +41,7 @@ type Claim struct {
 }
 
 type ArenaDataResponse struct {
-	Nama string `json:"nama"`
+	Name string `json:"name"`
 	Id   int    `json:"id"`
 }
 
@@ -150,7 +150,7 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		booking.Username = userData.Username
-		booking.ArenaName = arenaData.Nama
+		booking.ArenaName = arenaData.Name
 		bookings = append(bookings, booking)
 	}
 
