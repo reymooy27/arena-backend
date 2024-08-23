@@ -6,7 +6,6 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/reymooy27/arena-backend/payment-service/db"
-	"github.com/reymooy27/arena-backend/payment-service/gateway"
 	"github.com/reymooy27/arena-backend/payment-service/internal/service/payment"
 	pb "github.com/reymooy27/arena-backend/payment-service/proto"
 	"google.golang.org/grpc"
@@ -18,8 +17,6 @@ func main() {
 
 	db.InitDatabase()
 	db.RunMigration()
-
-	go gateway.APIGateway()
 
 	listener, err := net.Listen("tcp", ":50051")
 

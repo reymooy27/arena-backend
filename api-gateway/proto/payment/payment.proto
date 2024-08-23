@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option go_package = "github.com/reymooy27/arena-backend/api-gateway/proto";
+
+package proto;
+
+message PaymentRequest {
+  int64 total_amount = 1;
+  string payment_method = 2;
+}
+
+message PaymentResponse {
+  string message = 1;
+  bool success = 2;
+  int64 payment_id = 3;
+}
+
+message CancelPaymentRequest {
+  int64 payment_id = 1;
+}
+
+message CancelPaymentResponse {
+  string message = 1;
+  bool success = 2;
+}
+
+service PaymentService {
+  rpc CreatePayment(PaymentRequest) returns (PaymentResponse);
+  rpc CancelPayment(CancelPaymentRequest) returns (CancelPaymentResponse);
+}

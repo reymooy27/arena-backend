@@ -1,4 +1,4 @@
-package gateway
+package handlers
 
 import (
 	"context"
@@ -6,7 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	pb "github.com/reymooy27/arena-backend/payment-service/proto"
+	pb "github.com/reymooy27/arena-backend/api-gateway/proto/payment"
+	"github.com/reymooy27/arena-backend/api-gateway/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -21,28 +22,7 @@ type Response struct {
 	Success bool   `json:"success"`
 }
 
-func APIGateway() {
-	router := http.NewServeMux()
-	router.HandleFunc("POST /payment/create", createPayment)
-	router.HandleFunc("POST /paymet/cancel", cancelPayment)
-
-	port := "5000"
-
-	server := http.Server{
-		Addr:    ":" + port,
-		Handler: router,
-	}
-
-	slog.Info("Starting server", "port", port)
-
-	err := server.ListenAndServe()
-	if err != nil {
-		slog.Error("Cannot start server", "err", err)
-		return
-	}
-}
-
-func createPayment(w http.ResponseWriter, r *http.Request) {
+func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	var data Request
 
 	err := json.NewDecoder(r.Body).Decode(&data)
@@ -77,11 +57,5 @@ func createPayment(w http.ResponseWriter, r *http.Request) {
 		Success: res.Success,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(&response)
-}
-
-func cancelPayment(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(200)
+	utils.JSONResponse(w, 200, response)
 }
