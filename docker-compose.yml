@@ -10,6 +10,17 @@ services:
     networks:
       - app-network
 
+  payment-postgres:
+    image: postgres:latest
+    volumes:
+      - payment-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: itzyaboirey
+      POSTGRES_PASSWORD: reymooY27
+      POSTGRES_DB: payment-service
+    networks:
+      - app-network
+
   auth-postgres:
     image: postgres:latest
     volumes:
@@ -82,10 +93,42 @@ services:
       - ARENA_SERVICE_URL=http://arena-service:8000
       - USER_SERVICE_URL=http://auth-service:8001
 
+  payment-service:
+    depends_on:
+      - payment-postgres
+    image: payment-service:latest
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    ports:
+      - "50001:50001"
+    networks:
+      - app-network
+    environment:
+      - DB_URL=postgresql://itzyaboirey:reymooY27@payment-postgres:5432/payment-service?sslmode=disable
+      - PORT=50001
+      - SECRET=secret
+
+  api-gateway:
+    image: api-gateway:latest
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+    environment:
+      - PORT=5000
+      - SECRET=secret
+      - PAYMENT_SERVICE_URL=payment-service:50001
+
 networks:
   app-network:
+    driver: bridge
 
 volumes:
   booking-postgres:
   auth-postgres:
   arena-postgres:
+  payment-postgres:
