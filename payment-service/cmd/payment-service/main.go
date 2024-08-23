@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"net"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/reymooy27/arena-backend/payment-service/db"
@@ -18,7 +19,12 @@ func main() {
 	db.InitDatabase()
 	db.RunMigration()
 
-	listener, err := net.Listen("tcp", ":50051")
+	port := os.Getenv("PORT")
+	if port == "" {
+		slog.Error("PORT not set")
+	}
+
+	listener, err := net.Listen("tcp", ":"+port)
 
 	if err != nil {
 		slog.Error("Could not start grpc server", "err", err)
