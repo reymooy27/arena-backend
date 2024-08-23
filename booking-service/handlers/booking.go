@@ -4,9 +4,9 @@ import (
 	// "database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
+	"os"
 
 	// "os"
 	// "strings"
@@ -39,6 +39,16 @@ type Claim struct {
 	jwt.StandardClaims
 }
 
+type ArenaDataResponse struct {
+	Name string `json:"name"`
+	Id   int    `json:"id"`
+}
+
+type UserDataResponse struct {
+	Username string `json:"username"`
+	Id       int    `json:"id"`
+}
+
 // INFO: not finished,
 // INFO: still testing
 func CreateBooking(w http.ResponseWriter, r *http.Request) {
@@ -53,9 +63,24 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = GetArenaData(body.ArenaId)
+
+	if err != nil {
+		slog.Error("Get arena data error", "message", err)
+		utils.JSONResponse(w, http.StatusBadRequest, "Cannot create booking")
+		return
+	}
+
+	_, err = GetUserData(user.Id)
+
+	if err != nil {
+		slog.Error("Get user data", "message", err)
+		utils.JSONResponse(w, http.StatusBadRequest, "Cannot create booking")
+		return
+	}
+
 	query := `INSERT INTO bookings (arena_id, user_id, booking_slots) VALUES ($1, $2, $3)`
-	result, err := db.DB.Exec(query, body.ArenaId, user.Id, "slot 1")
-	log.Println(result)
+	_, err = db.DB.Exec(query, body.ArenaId, user.Id, "slot 1")
 	if err != nil {
 		slog.Error("Query error", "message", err)
 		utils.JSONResponse(w, http.StatusBadRequest, "Cannot create booking")
@@ -65,7 +90,7 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 	utils.JSONResponse(w, http.StatusOK, "Successfully create booking")
 }
 
-// TODO: join table/data from different database (microrservices)
+// TODO: still looking for better aproach to join data between services
 func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 
 	user := r.Context().Value("user").(*Claim)
@@ -139,28 +164,28 @@ func GetUserBookings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		booking.Username = userData.Username
-		booking.ArenaName = arenaData.Nama
+		booking.ArenaName = arenaData.Name
 		bookings = append(bookings, booking)
 	}
 
 	utils.JSONResponse(w, http.StatusOK, bookings)
 }
 
-type UserDataResponse struct {
-	Username string `json:"username"`
-	Id       int    `json:"id"`
-}
-
 func GetUserData(userId int) (*UserDataResponse, error) {
-	res, err := http.Get(fmt.Sprintf("http://localhost:8001/user/%d", userId))
+	userServiceURL := os.Getenv("USER_SERVICE_URL")
+
+	url := fmt.Sprintf("%s/user/%d", userServiceURL, userId)
+	res, err := http.Get(url)
 	if err != nil {
+		slog.Error("Cannot fetch user data", "err", err)
 		return nil, err
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, err
+		slog.Error("Cannot fetch user data", "err", res.StatusCode)
+		return nil, fmt.Errorf("Get user Status Not OK")
 	}
 
 	var response UserDataResponse
@@ -172,21 +197,21 @@ func GetUserData(userId int) (*UserDataResponse, error) {
 	return &response, nil
 }
 
-type ArenaDataResponse struct {
-	Nama string `json:"nama"`
-	Id   int    `json:"id"`
-}
-
 func GetArenaData(arenaId int) (*ArenaDataResponse, error) {
-	res, err := http.Get(fmt.Sprintf("http://localhost:8000/arena/%d", arenaId))
+
+	arenaServiceURL := os.Getenv("ARENA_SERVICE_URL")
+
+	res, err := http.Get(fmt.Sprintf("%s/arena/%d", arenaServiceURL, arenaId))
 	if err != nil {
+		slog.Error("Cannot fetch arena data", "err", err)
 		return nil, err
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, err
+		slog.Error("Get arena Status Not OK", "err", res.StatusCode)
+		return nil, fmt.Errorf("Get arena Status Not OK")
 	}
 	var response ArenaDataResponse
 

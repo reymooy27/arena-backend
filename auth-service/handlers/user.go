@@ -42,7 +42,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 
 	var users []PublicUser
 
-	query := `SELECT id, username, created_at FROM "user" LIMIT $1`
+	query := `SELECT id, username, created_at FROM "users" LIMIT $1`
 	row, err := db.DB.Query(query, pageSize)
 	if err != nil {
 		slog.Error("Query error", err)
@@ -75,7 +75,7 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 	var user PublicUser
 
-	query := `SELECT id, username, created_at FROM "user" WHERE id = $1 LIMIT 1`
+	query := `SELECT id, username, created_at FROM "users" WHERE id = $1 LIMIT 1`
 
 	if err = db.DB.QueryRow(query, parsedId).Scan(&user.Id, &user.Username, &user.CreatedAt); err != nil {
 		if err == sql.ErrNoRows {
@@ -108,7 +108,7 @@ func DeleteUserAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `DELETE FROM "user" WHERE id = $1`
+	query := `DELETE FROM "users" WHERE id = $1`
 	row, err := db.DB.Exec(query, parsedId)
 	if err != nil {
 		slog.Error("Cannot delete user", err)
@@ -155,7 +155,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `UPDATE "user" SET username = $1 WHERE id = $2`
+	query := `UPDATE "users" SET username = $1 WHERE id = $2`
 	res, err := db.DB.Exec(query, data.Username, parsedId)
 
 	if err != nil {

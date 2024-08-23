@@ -52,7 +52,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	var user User
 
-	query := `SELECT * FROM "user" WHERE username = $1`
+	query := `SELECT * FROM "users" WHERE username = $1`
 	row := db.DB.QueryRow(query, data.Username)
 	err = row.Scan(&user.Id, &user.CreatedAt, &user.Username, &user.Password)
 	if err != nil {
@@ -157,7 +157,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	var existedUsername string
-	existedUsernameQuery := ` SELECT username FROM "user" WHERE username = $1 LIMIT 1`
+	existedUsernameQuery := ` SELECT username FROM "users" WHERE username = $1 LIMIT 1`
 	err = tx.QueryRow(existedUsernameQuery, strings.Trim(data.Username, " ")).Scan(&existedUsername)
 	if err != nil && err != sql.ErrNoRows {
 		slog.Error("Query check username exist", "message", err)
@@ -177,7 +177,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var userId int
-	query := `INSERT INTO "user" ("username","password") VALUES ($1, $2) RETURNING "id"`
+	query := `INSERT INTO "users" ("username","password") VALUES ($1, $2) RETURNING "id"`
 	if err = tx.QueryRow(query, data.Username, string(hashedPassword)).Scan(&userId); err != nil {
 		slog.Error("Query create user", "message", err)
 		utils.JSONResponse(w, http.StatusInternalServerError, "Cannot create user")
@@ -220,7 +220,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `SELECT id, username FROM "user" WHERE id = $1 LIMIT 1`
+	query := `SELECT id, username FROM "users" WHERE id = $1 LIMIT 1`
 
 	if err := db.DB.QueryRow(query, context.Id).Scan(&user.Id, &user.Username); err != nil {
 		if err == sql.ErrNoRows {
@@ -251,7 +251,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query = `UPDATE "user" SET password = $1 WHERE id = $2`
+	query = `UPDATE "users" SET password = $1 WHERE id = $2`
 	_, err = db.DB.Exec(query, string(hashedPassword), user.Id)
 
 	if err != nil {

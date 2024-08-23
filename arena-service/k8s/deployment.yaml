@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arena-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: arena-service
+  template:
+    metadata:
+      labels:
+        app: arena-service
+    spec:
+      containers:
+        - name: arena-service
+          image: itzyaboirey/arena-service:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: arena-service-config
+                  key: PORT
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: arena-service-secret
+                  key: DB_URL
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: arena-service-secret
+                  key: SECRET
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arena-service
+spec:
+  selector:
+    app: arena-service
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: LoadBalancer

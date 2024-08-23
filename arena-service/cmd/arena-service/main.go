@@ -16,6 +16,7 @@ func main() {
 	godotenv.Load(".env")
 
 	db.InitDatabase()
+	db.RunMigration()
 
 	router := http.NewServeMux()
 

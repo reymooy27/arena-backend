@@ -1,5 +1,40 @@
 services:
+  booking-postgres:
+    image: postgres:latest
+    volumes:
+      - booking-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: itzyaboirey
+      POSTGRES_PASSWORD: reymooY27
+      POSTGRES_DB: booking-service
+    networks:
+      - app-network
+
+  auth-postgres:
+    image: postgres:latest
+    volumes:
+      - auth-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: itzyaboirey
+      POSTGRES_PASSWORD: reymooY27
+      POSTGRES_DB: auth-service
+    networks:
+      - app-network
+
+  arena-postgres:
+    image: postgres:latest
+    volumes:
+      - arena-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: itzyaboirey
+      POSTGRES_PASSWORD: reymooY27
+      POSTGRES_DB: arena-service
+    networks:
+      - app-network
+
   arena-service:
+    depends_on:
+      - arena-postgres
     image: arena-service:latest
     build:
       context: ./arena-service
@@ -8,9 +43,14 @@ services:
       - "8000:8000"
     networks:
       - app-network
-    env_file: ./arena-service/.env
+    environment:
+      - DB_URL=postgresql://itzyaboirey:reymooY27@arena-postgres:5432/arena-service?sslmode=disable
+      - PORT=8000
+      - SECRET=secret
 
   auth-service:
+    depends_on:
+      - auth-postgres
     image: auth-service:latest
     build:
       context: ./auth-service
@@ -19,9 +59,14 @@ services:
       - "8001:8001"
     networks:
       - app-network
-    env_file: ./auth-service/.env
+    environment:
+      - DB_URL=postgresql://itzyaboirey:reymooY27@auth-postgres:5432/auth-service?sslmode=disable
+      - PORT=8001
+      - SECRET=secret
 
   booking-service:
+    depends_on:
+      - booking-postgres
     image: booking-service:latest
     build:
       context: ./booking-service
@@ -30,19 +75,17 @@ services:
       - "8002:8002"
     networks:
       - app-network
-    env_file: ./booking-service/.env
-
-  # db:
-  #   image: postgres:latest
-  #   volumes:
-  #     - db-data:/var/lib/postgresql/data
-  #   environment:
-  #     POSTGRES_USER: user
-  #     POSTGRES_PASSWORD: password
-  #   networks:
-  #     - app-network
+    environment:
+      - DB_URL=postgresql://itzyaboirey:reymooY27@booking-postgres:5432/booking-service?sslmode=disable
+      - PORT=8002
+      - SECRET=secret
+      - ARENA_SERVICE_URL=http://arena-service:8000
+      - USER_SERVICE_URL=http://auth-service:8001
 
 networks:
   app-network:
-# volumes:
-#   db-data:
+
+volumes:
+  booking-postgres:
+  auth-postgres:
+  arena-postgres:

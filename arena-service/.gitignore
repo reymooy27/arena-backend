@@ -25,7 +25,6 @@ tmp/
 
 # Logs and databases
 *.log
-*.sql
 *.sqlite
 
 # Dependency directories
