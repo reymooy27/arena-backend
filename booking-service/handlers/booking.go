@@ -4,7 +4,6 @@ import (
 	// "database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -64,9 +63,24 @@ func CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = GetArenaData(body.ArenaId)
+
+	if err != nil {
+		slog.Error("Get arena data error", "message", err)
+		utils.JSONResponse(w, http.StatusBadRequest, "Cannot create booking")
+		return
+	}
+
+	_, err = GetUserData(user.Id)
+
+	if err != nil {
+		slog.Error("Get user data", "message", err)
+		utils.JSONResponse(w, http.StatusBadRequest, "Cannot create booking")
+		return
+	}
+
 	query := `INSERT INTO bookings (arena_id, user_id, booking_slots) VALUES ($1, $2, $3)`
-	result, err := db.DB.Exec(query, body.ArenaId, user.Id, "slot 1")
-	log.Println(result)
+	_, err = db.DB.Exec(query, body.ArenaId, user.Id, "slot 1")
 	if err != nil {
 		slog.Error("Query error", "message", err)
 		utils.JSONResponse(w, http.StatusBadRequest, "Cannot create booking")
@@ -170,8 +184,8 @@ func GetUserData(userId int) (*UserDataResponse, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		slog.Error("Cannot fetch user data", "err", err)
-		return nil, err
+		slog.Error("Cannot fetch user data", "err", res.StatusCode)
+		return nil, fmt.Errorf("Get user Status Not OK")
 	}
 
 	var response UserDataResponse
@@ -196,8 +210,8 @@ func GetArenaData(arenaId int) (*ArenaDataResponse, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		slog.Error("Cannot fetch arena data", "err", err)
-		return nil, err
+		slog.Error("Get arena Status Not OK", "err", res.StatusCode)
+		return nil, fmt.Errorf("Get arena Status Not OK")
 	}
 	var response ArenaDataResponse
 
