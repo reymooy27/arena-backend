@@ -17,8 +17,8 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 COPY --from=builder /app/payment-service .
-COPY --from=builder /app/.env .
+COPY --from=builder /app/db/migrations /root/db/migrations
 
-EXPOSE 8003
+EXPOSE 50001
 
 CMD ["./payment-service"]
