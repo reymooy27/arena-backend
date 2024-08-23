@@ -3,10 +3,12 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
+	"github.com/reymooy27/arena-backend/api-gateway/handlers/gateway"
 	pb "github.com/reymooy27/arena-backend/api-gateway/proto/payment"
 	"github.com/reymooy27/arena-backend/api-gateway/utils"
 	"google.golang.org/grpc"
@@ -23,12 +25,21 @@ type Response struct {
 	Success bool   `json:"success"`
 }
 
-func CreatePayment(w http.ResponseWriter, r *http.Request) {
+type PaymentHandler struct {
+	paymentClient pb.PaymentServiceClient
+}
+
+func NewPaymentHandler(apiGateway gateway.APIGateway) *PaymentHandler {
+	return &PaymentHandler{paymentClient: apiGateway.PaymentClient}
+}
+
+func (s *PaymentHandler) CreatePayment(w http.ResponseWriter, r *http.Request) {
 	var data Request
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		slog.Error("Cannot decode json", "err", err)
+		utils.JSONResponse(w, 400, fmt.Errorf("Invalid request body"))
 		return
 	}
 
@@ -40,6 +51,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		slog.Error("Cannot connect to grpc", "err", err)
+		utils.JSONResponse(w, 500, fmt.Errorf("Cannot create payment"))
 		return
 	}
 
@@ -55,6 +67,7 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 	res, err := client.CreatePayment(context.Background(), req)
 	if err != nil {
 		slog.Error("Cannot create payment", "err", err)
+		utils.JSONResponse(w, 500, fmt.Errorf("Cannot create payment"))
 		return
 	}
 
