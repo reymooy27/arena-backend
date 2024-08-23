@@ -1,19 +1,13 @@
 package main
 
 import (
-	// "log"
-	// "log/slog"
-	// "net/http"
-	// "os"
-
-	"context"
-	"log"
+	"log/slog"
 	"net"
 
 	"github.com/joho/godotenv"
 	"github.com/reymooy27/arena-backend/payment-service/db"
+	"github.com/reymooy27/arena-backend/payment-service/internal/service/payment"
 	pb "github.com/reymooy27/arena-backend/payment-service/proto"
-	// "github.com/reymooy27/arena-backend/payment-service/routes"
 	"google.golang.org/grpc"
 )
 
@@ -22,26 +16,23 @@ func main() {
 	godotenv.Load(".env")
 
 	db.InitDatabase()
+	db.RunMigration()
 
 	listener, err := net.Listen("tcp", ":50051")
+
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Could not start server", "err", err)
 		return
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterHelloServiceServer(s, &server{})
-	log.Printf("Server is running at port %v", listener.Addr())
+
+	pb.RegisterPaymentServiceServer(s, &payment.Server{})
+
+	slog.Info("Server is running at", "PORT", listener.Addr())
+
 	if err := s.Serve(listener); err != nil {
-		log.Fatalf("Could not serve: %v", err)
+		slog.Error("Could not serve", "err", err)
 	}
 
-}
-
-type server struct {
-	pb.UnimplementedHelloServiceServer
-}
-
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloResponse, error) {
-	return &pb.HelloResponse{Message: "Hello " + in.GetName()}, nil
 }

@@ -19,6 +19,6 @@ WORKDIR /root/
 COPY --from=builder /app/payment-service .
 COPY --from=builder /app/.env .
 
-EXPOSE 8000
+EXPOSE 8003
 
 CMD ["./payment-service"]
