@@ -3,12 +3,14 @@ package main
 import (
 	"log"
 	"log/slog"
-	"net/http"
+	"net"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/reymooy27/arena-backend/arena-service/db"
-	"github.com/reymooy27/arena-backend/arena-service/routes"
+	"github.com/reymooy27/arena-backend/arena-service/internal/service/arena"
+	pb "github.com/reymooy27/arena-backend/arena-service/proto"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -18,22 +20,25 @@ func main() {
 	db.InitDatabase()
 	db.RunMigration()
 
-	router := http.NewServeMux()
-
-	routes.ArenaRoutes(router)
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("PORT not set")
 	}
 
-	server := http.Server{
-		Addr:    ":" + port,
-		Handler: router,
+	listener, err := net.Listen("tcp", ":"+port)
+
+	if err != nil {
+		slog.Error("Could not start grpc server", "err", err)
+		return
 	}
 
-	slog.Info("Arena Service is running", "PORT", port)
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Cannot start server: %s", err)
+	s := grpc.NewServer()
+
+	pb.RegisterArenaServiceServer(s, &arena.Server{})
+
+	slog.Info("Arena Service is running at", "PORT", listener.Addr())
+
+	if err := s.Serve(listener); err != nil {
+		slog.Error("Could not start grpc server", "err", err)
 	}
 }
