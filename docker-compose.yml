@@ -21,7 +21,20 @@ services:
     networks:
       - app-network
 
+  arena-postgres:
+    image: postgres:latest
+    volumes:
+      - arena-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: itzyaboirey
+      POSTGRES_PASSWORD: reymooY27
+      POSTGRES_DB: arena-service
+    networks:
+      - app-network
+
   arena-service:
+    depends_on:
+      - arena-postgres
     image: arena-service:latest
     build:
       context: ./arena-service
@@ -30,7 +43,10 @@ services:
       - "8000:8000"
     networks:
       - app-network
-    env_file: ./arena-service/.env
+    environment:
+      - DB_URL=postgresql://itzyaboirey:reymooY27@arena-postgres:5432/arena-service?sslmode=disable
+      - PORT=8000
+      - SECRET=secret
 
   auth-service:
     depends_on:
@@ -72,3 +88,4 @@ networks:
 volumes:
   booking-postgres:
   auth-postgres:
+  arena-postgres:
