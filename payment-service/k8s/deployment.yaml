@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: itzyaboirey/payment-service:latest
+          ports:
+            - containerPort: 50001
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: payment-service-config
+                  key: PORT
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: payment-service-secret
+                  key: DB_URL
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: payment-service-secret
+                  key: SECRET
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - protocol: TCP
+      port: 50001
+      targetPort: 50001
+  type: LoadBalancer
