@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"os"
 
 	pb "github.com/reymooy27/arena-backend/api-gateway/proto/payment"
 	"github.com/reymooy27/arena-backend/api-gateway/utils"
@@ -31,7 +32,12 @@ func CreatePayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := grpc.NewClient(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	port := os.Getenv("PAYMENT_SERVICE_URL")
+	if port == "" {
+		slog.Error("PORT not set")
+	}
+
+	conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		slog.Error("Cannot connect to grpc", "err", err)
 		return
