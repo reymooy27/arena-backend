@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/reymooy27/arena-backend/auth-service/proto";
+
+package proto;
+
+message AuthRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthResponse{
+  string message = 1;
+  bool success = 2;
+}
+
+message UserRequest{
+  int64 id = 1;
+}
+
+message UserResponse{
+  int64 id = 1;
+  string username = 2;
+}
+
+message UpdateUserRequest{
+  int64 id = 1;
+  string username = 2;
+}
+
+message ListUser{
+  repeated users UserResponse;
+}
+
+service AuthService {
+  rpc Login(AuthRequest) returns (AuthResponse);
+  rpc Signup(AuthRequest) returns (AuthResponse);
+  rpc Logout(google.protobuf.Empty) returns (AuthResponse);
+  rpc Verify(google.protobuf.Empty) returns (AuthResponse);
+
+  rpc GetUserById(UserRequest) returns (AuthResponse);
+  rpc GetUsers(google.protobuf.Empty) returns (ListUser);
+  rpc UpdateUser(UpdateUserRequest) returns (AuthReponse);
+  rpc DeleteUser(UserRequest) returns (AuthReponse);
+}
