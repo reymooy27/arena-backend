@@ -7,10 +7,12 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/reymooy27/arena-backend/api-gateway/handlers/gateway"
 	pb "github.com/reymooy27/arena-backend/api-gateway/proto/arena"
 	"github.com/reymooy27/arena-backend/api-gateway/utils"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Request struct {
@@ -25,10 +27,10 @@ type Response struct {
 }
 
 type ArenaResponse struct {
-	ArenaId     int64
-	Name        string
-	Description string
-	CreatedAt   string
+	ArenaId     int64     `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type ArenaHandler struct {
@@ -61,12 +63,7 @@ func (s *ArenaHandler) CreateArena(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response = Response{
-		Message: res.Message,
-		Success: res.Success,
-	}
-
-	utils.JSONResponse(w, 200, response)
+	utils.JSONResponse(w, 200, res)
 }
 
 func (s *ArenaHandler) GetArenaById(w http.ResponseWriter, r *http.Request) {
@@ -89,12 +86,97 @@ func (s *ArenaHandler) GetArenaById(w http.ResponseWriter, r *http.Request) {
 		utils.JSONResponse(w, 500, fmt.Errorf("Cannot get arena data"))
 		return
 	}
-
-	var response = ArenaResponse{
+	response := ArenaResponse{
 		ArenaId:     res.ArenaId,
 		Name:        res.Name,
 		Description: res.Description,
+		CreatedAt:   res.CreatedAt.AsTime(),
 	}
 
 	utils.JSONResponse(w, 200, response)
+}
+
+func (s *ArenaHandler) GetArenas(w http.ResponseWriter, r *http.Request) {
+
+	res, err := s.arenaClient.GetArenas(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		slog.Error("Cannot get arena data", "err", err)
+		utils.JSONResponse(w, 500, fmt.Errorf("Cannot get arena data"))
+		return
+	}
+
+	response := make([]ArenaResponse, 0, len(res.Arenas))
+
+	for _, v := range res.Arenas {
+		response = append(response,
+			ArenaResponse{
+				ArenaId:     v.ArenaId,
+				CreatedAt:   v.CreatedAt.AsTime(),
+				Name:        v.Name,
+				Description: v.Description,
+			},
+		)
+
+	}
+
+	utils.JSONResponse(w, 200, response)
+}
+
+func (s *ArenaHandler) UpdateArena(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	parsedId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		slog.Error("Invalid arena id", "err", err)
+		utils.JSONResponse(w, 500, fmt.Errorf("Invalid arena id"))
+		return
+	}
+
+	var data Request
+
+	err = json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		slog.Error("Cannot decode json", "err", err)
+		utils.JSONResponse(w, 400, fmt.Errorf("Invalid request body"))
+		return
+	}
+
+	req := &pb.UpdateArenaRequest{
+		ArenaId:     parsedId,
+		Name:        data.Name,
+		Description: data.Description,
+	}
+
+	res, err := s.arenaClient.UpdateArena(context.Background(), req)
+	if err != nil {
+		slog.Error("Cannot update arena data", "err", err)
+		utils.JSONResponse(w, 500, fmt.Errorf("Cannot update arena data"))
+		return
+	}
+
+	utils.JSONResponse(w, 200, res)
+}
+
+func (s *ArenaHandler) DeleteArena(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	parsedId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		slog.Error("Invalid arena id", "err", err)
+		utils.JSONResponse(w, 500, fmt.Errorf("Invalid arena id"))
+		return
+	}
+
+	req := &pb.GetArenaRequest{
+		ArenaId: parsedId,
+	}
+
+	res, err := s.arenaClient.DeleteArena(context.Background(), req)
+	if err != nil {
+		slog.Error("Cannot delete arena data", "err", err)
+		utils.JSONResponse(w, 500, fmt.Errorf("Cannot delete arena data"))
+		return
+	}
+
+	utils.JSONResponse(w, 200, res)
 }
