@@ -3,9 +3,9 @@ package routes
 import (
 	"net/http"
 
-	payment "github.com/reymooy27/arena-backend/api-gateway/handlers"
 	arena "github.com/reymooy27/arena-backend/api-gateway/handlers/arena"
 	"github.com/reymooy27/arena-backend/api-gateway/handlers/gateway"
+	payment "github.com/reymooy27/arena-backend/api-gateway/handlers/payment"
 	"github.com/reymooy27/arena-backend/api-gateway/middleware"
 )
 
