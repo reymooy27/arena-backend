@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -47,7 +46,7 @@ func (s *ArenaHandler) CreateArena(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		slog.Error("Cannot decode json", "err", err)
-		utils.JSONResponse(w, 400, fmt.Errorf("Invalid request body"))
+		utils.JSONResponse(w, 400, "Invalid request body")
 		return
 	}
 
@@ -59,7 +58,7 @@ func (s *ArenaHandler) CreateArena(w http.ResponseWriter, r *http.Request) {
 	res, err := s.arenaClient.CreateArena(context.Background(), req)
 	if err != nil {
 		slog.Error("Cannot create arena", "err", err)
-		utils.JSONResponse(w, 500, fmt.Errorf("Cannot create arena"))
+		utils.JSONResponse(w, 500, "Cannot create arena")
 		return
 	}
 
@@ -72,7 +71,7 @@ func (s *ArenaHandler) GetArenaById(w http.ResponseWriter, r *http.Request) {
 	parsedId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		slog.Error("Invalid arena id", "err", err)
-		utils.JSONResponse(w, 500, fmt.Errorf("Invalid arena id"))
+		utils.JSONResponse(w, 500, "Invalid arena id")
 		return
 	}
 
@@ -83,7 +82,7 @@ func (s *ArenaHandler) GetArenaById(w http.ResponseWriter, r *http.Request) {
 	res, err := s.arenaClient.GetArenaById(context.Background(), req)
 	if err != nil {
 		slog.Error("Cannot get arena data", "err", err)
-		utils.JSONResponse(w, 500, fmt.Errorf("Cannot get arena data"))
+		utils.JSONResponse(w, 500, "Cannot get arena data")
 		return
 	}
 	response := ArenaResponse{
@@ -101,7 +100,7 @@ func (s *ArenaHandler) GetArenas(w http.ResponseWriter, r *http.Request) {
 	res, err := s.arenaClient.GetArenas(context.Background(), &emptypb.Empty{})
 	if err != nil {
 		slog.Error("Cannot get arena data", "err", err)
-		utils.JSONResponse(w, 500, fmt.Errorf("Cannot get arena data"))
+		utils.JSONResponse(w, 500, "Cannot get arena data")
 		return
 	}
 
@@ -128,7 +127,7 @@ func (s *ArenaHandler) UpdateArena(w http.ResponseWriter, r *http.Request) {
 	parsedId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		slog.Error("Invalid arena id", "err", err)
-		utils.JSONResponse(w, 500, fmt.Errorf("Invalid arena id"))
+		utils.JSONResponse(w, 500, "Invalid arena id")
 		return
 	}
 
@@ -137,7 +136,7 @@ func (s *ArenaHandler) UpdateArena(w http.ResponseWriter, r *http.Request) {
 	err = json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		slog.Error("Cannot decode json", "err", err)
-		utils.JSONResponse(w, 400, fmt.Errorf("Invalid request body"))
+		utils.JSONResponse(w, 400, "Invalid request body")
 		return
 	}
 
@@ -150,7 +149,7 @@ func (s *ArenaHandler) UpdateArena(w http.ResponseWriter, r *http.Request) {
 	res, err := s.arenaClient.UpdateArena(context.Background(), req)
 	if err != nil {
 		slog.Error("Cannot update arena data", "err", err)
-		utils.JSONResponse(w, 500, fmt.Errorf("Cannot update arena data"))
+		utils.JSONResponse(w, 500, "Cannot update arena data")
 		return
 	}
 
@@ -163,7 +162,7 @@ func (s *ArenaHandler) DeleteArena(w http.ResponseWriter, r *http.Request) {
 	parsedId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		slog.Error("Invalid arena id", "err", err)
-		utils.JSONResponse(w, 500, fmt.Errorf("Invalid arena id"))
+		utils.JSONResponse(w, 500, "Invalid arena id")
 		return
 	}
 
@@ -174,7 +173,7 @@ func (s *ArenaHandler) DeleteArena(w http.ResponseWriter, r *http.Request) {
 	res, err := s.arenaClient.DeleteArena(context.Background(), req)
 	if err != nil {
 		slog.Error("Cannot delete arena data", "err", err)
-		utils.JSONResponse(w, 500, fmt.Errorf("Cannot delete arena data"))
+		utils.JSONResponse(w, 500, "Cannot delete arena data")
 		return
 	}
 
