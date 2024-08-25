@@ -20,6 +20,6 @@ COPY --from=builder /app/arena-service .
 COPY --from=builder /app/db/migrations /root/db/migrations
 # COPY --from=builder /app/.env .
 
-EXPOSE 8000
+EXPOSE 50002
 
 CMD ["./arena-service"]
